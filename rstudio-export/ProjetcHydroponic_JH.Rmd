@@ -1,0 +1,131 @@
+---
+title: "R Analyses"
+author: "Jeffrey Horwitz"
+date: "2022-12-10"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# loading packages
+```{r}
+library(tidyverse)
+library(ggthemes) # to add more themes
+library(ggbeeswarm) # to add more geoms
+```
+
+#Visualization
+```{r}
+#Tomatoes Yield Per Method
+p1 <- Tomatoes_dataset%>%
+    ggplot(mapping = aes(x = Method, y = `Yield Mean`, fill = Method)) +
+    geom_col(width = 0.5, position = "dodge") +
+    labs(title = "Tomato Yield Per Method",  
+         x = "Growing Methods", 
+         y = "Mean Yield (kg/m2/year)")+
+  scale_color_canva()+
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))+
+  theme(legend.position = "none")
+plot(p1)
+
+#Lettuce & Chicory Yield Per Method visualization
+p2 <- LettuceChicory_dataset%>%
+    ggplot(mapping = aes(x = Method, y = `Mean Yield`, fill = Method)) +
+    geom_col(width = 0.5, position = "dodge") +
+    labs(title = "Lettuce & Chicory Yield Per Method",  
+         x = "Growing Methods", 
+         y = "Mean Yield (kg/m2/year)")+
+  scale_color_canva()+
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))+
+  theme(legend.position = "none")
+plot(p2)
+
+#Crops grown Yield Per Orientation visualization (for hydroponic)
+
+TomatoesLettuce %>%
+  filter(Growing_methods != "Aquaponic") %>%
+  filter(Growing_methods != "Soil-based") %>%
+  group_by(Orientation, Crop_grown_detailed, Growing_methods) %>%
+  mutate(YieldMean = mean(Yield)) %>%
+  ggplot(mapping = aes(x = Orientation, y = YieldMean,
+                       fill = Crop_grown_detailed)) +
+  geom_col(width = 0.5, position = "dodge") +
+  labs(
+    title = "      Growing Methods for Lettuce/Chicory and Tomatoes",
+    subtitle = "",
+    x = "Growing Orientation",
+    y = "Mean Yield (kg/m^2/year)"
+  ) +
+  scale_color_brewer() +
+  theme_bw()
+
+# library(patchwork)
+install.packages("patchwork")
+library(patchwork)
+p1+p2 +
+  plot_annotation(tag_levels = 'A')
+```
+
+# t-test for Tomatoes Yield Per Method
+```{r}
+#normality check for hydroponic
+n=54
+mean(Tomatoes_hydroponic$Tomatoes_hydroponic)
+sd(Tomatoes_hydroponic$Tomatoes_hydroponic)
+shapiro.test(rnorm(54, mean = 15.93, sd = 27.1))
+
+#normality check for soil-based
+n=153
+mean(Tomatoes$`Tomatoes_soil-based`)
+sd(Tomatoes$`Tomatoes_soil-based`)
+shapiro.test(rnorm(153, mean = 6.139281, sd = 4.880408))
+
+# From the output, the two p-values are greater than the significance level 0.05 indicating that the distribution of the data are not significantly different from the normal distribution. In other words, we can assume the normality.
+
+#variance check for hydroponic & soil-based (using Bartlett’s test because normally distributed)
+install.packages("car")
+library(car)
+bartlett.test(Yield ~ Growing_methods, data = Tomatoes_var)
+
+# The p-value of the Bartlett’s test is significant, suggesting that there is a significant difference between the variances of the two groups. Therefore, we’ll use the Welch t-test, which doesn’t assume the equality of the two variances.
+
+#t-test
+t.test(Tomatoes$Tomatoes_hydroponic,Tomatoes$`Tomatoes_soil-based`)
+
+# t-test per Orientation (only hydroponic)
+t.test(Orientation$`Tomatoes_Horizontal farming`,Orientation$`Tomaotes_Vertical farming`)
+```
+
+# t-test for Lettuce&Chicory
+```{r}
+#normality check for hydroponic
+n=222
+mean(Lettuce$Lettuce_hydroponic)
+sd(Lettuce$Lettuce_hydroponic)
+shapiro.test(rnorm(222, mean = 7.129234, sd = 13.66884))
+
+#normality check for soil-based
+n=116
+mean(Lettuce_soil$Lettuce_soil)
+sd(Lettuce_soil$Lettuce_soil)
+shapiro.test(rnorm(116, mean = 2.580259, sd = 2.103701))
+
+# From the output, the two p-values are greater than the significance level 0.05 indicating that the distribution of the data are not significantly different from the normal distribution. In other words, we can assume the normality.
+
+#variance check for hydroponic & soil-based (using Bartlett’s test because normally distributed)
+bartlett.test(Yield ~ Growing_methods, data = Lettuce_var)
+# The p-value of the Bartlett’s test is significant, suggesting that there is a significant difference between the variances of the two groups. Therefore, we’ll use the Welch t-test, which doesn’t assume the equality of the two variances.
+
+#t-test
+t.test(Lettuce$Lettuce_hydroponic,Lettuce$Lettuce_soil)
+
+## t-test per Orientation (only hydroponic)
+t.test(Orientation$`Lettuce_Horizontal farming`,Orientation$`Lettuce_Vertical farming`)
+```
