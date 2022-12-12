@@ -31,3 +31,5 @@ Tomatoes_hydroponic.xlsx ; statistical dataset info for tomatoes
 Tomatoes_var.xlsx ; calulation for variance dataset
 
 project.Rproj
+
+BE310FinalProject.pdf ; .pdf of final paper
